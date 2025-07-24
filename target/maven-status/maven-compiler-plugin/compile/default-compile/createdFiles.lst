@@ -1,0 +1,7 @@
+com\shirtms\inventory\repository\InventoryRepository.class
+com\shirtms\inventory\dto\InventoryRequestDTO.class
+com\shirtms\inventory\service\InventoryServiceImpl.class
+com\shirtms\inventory\InventoryServiceApplication.class
+com\shirtms\inventory\service\InventoryService.class
+com\shirtms\inventory\controller\InventoryController.class
+com\shirtms\inventory\entity\InventoryItem.class
