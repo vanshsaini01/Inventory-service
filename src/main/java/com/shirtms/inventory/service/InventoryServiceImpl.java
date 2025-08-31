@@ -1,14 +1,13 @@
 package com.shirtms.inventory.service;
 
-import com.shirtms.inventory.dto.InventoryRequestDTO;
-import com.shirtms.inventory.entity.InventoryItem;
-import com.shirtms.inventory.repository.InventoryRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.shirtms.inventory.dto.InventoryRequestDTO;
+import com.shirtms.inventory.entity.InventoryItem;
+import com.shirtms.inventory.repository.InventoryRepository;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -18,43 +17,70 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public InventoryItem stockIn(InventoryRequestDTO request) {
-        Optional<InventoryItem> itemOpt = inventoryRepository.findByItemName(request.getItemName());
-        if (itemOpt.isPresent()) {
-            InventoryItem item = itemOpt.get();
+        List<InventoryItem> items = inventoryRepository.findByItemName(request.getItemName());
+        InventoryItem item;
+
+        if (items.isEmpty()) {
+            item = new InventoryItem();
+            item.setItemName(request.getItemName());
+            item.setProductType(request.getProductType());
+            item.setCurrentQuantity(request.getQuantity());
+        } else {
+            item = items.get(0);
             item.setCurrentQuantity(item.getCurrentQuantity() + request.getQuantity());
-            return inventoryRepository.save(item);
         }
-        throw new RuntimeException("Item not found");
+
+        return inventoryRepository.save(item);
     }
+    
+
 
     @Override
     public InventoryItem stockOut(InventoryRequestDTO request) {
-        Optional<InventoryItem> itemOpt = inventoryRepository.findByItemName(request.getItemName());
-        if (itemOpt.isPresent()) {
-            InventoryItem item = itemOpt.get();
-            int newQuantity = item.getCurrentQuantity() - request.getQuantity();
-            if (newQuantity < 0) throw new RuntimeException("Insufficient stock");
-            item.setCurrentQuantity(newQuantity);
-            return inventoryRepository.save(item);
+        List<InventoryItem> items = inventoryRepository.findByItemName(request.getItemName());
+        if (items.isEmpty()) {
+            throw new RuntimeException("Item not found in inventory: " + request.getItemName());
         }
-        throw new RuntimeException("Item not found");
-    }
 
-    @Override
-    public List<InventoryItem> getAllInventory() {
-        return inventoryRepository.findAll();
+        InventoryItem item = items.get(0);
+        if (item.getCurrentQuantity() < request.getQuantity()) {
+            throw new RuntimeException("Not enough stock for item: " + request.getItemName());
+        }
+
+        item.setCurrentQuantity(item.getCurrentQuantity() - request.getQuantity());
+        return inventoryRepository.save(item);
     }
 
     @Override
     public List<InventoryItem> getLowStockItems() {
-        return inventoryRepository.findAll()
-                .stream()
-                .filter(item -> item.getCurrentQuantity() < item.getMinimumThreshold())
-                .collect(Collectors.toList());
+        return inventoryRepository.findAll().stream()
+                .filter(item -> item.getCurrentQuantity() <= item.getMinimumThreshold())
+                .toList();
+    }
+
+    @Override
+    public List<InventoryItem> filterInventory(String itemName, String productType) {
+        if (itemName != null && productType != null) {
+            return inventoryRepository.findByItemNameAndProductType(itemName, productType);
+        } else if (itemName != null) {
+            return inventoryRepository.findByItemName(itemName);
+        } else if (productType != null) {
+            return inventoryRepository.findByProductType(productType);
+        } else {
+            return inventoryRepository.findAll();
+        }
     }
 
     @Override
     public InventoryItem addInventoryItem(InventoryItem item) {
         return inventoryRepository.save(item);
     }
+
+   
+
+    @Override
+    public List<InventoryItem> getAllItems() {
+        return inventoryRepository.findAll();
+    }
+
 }

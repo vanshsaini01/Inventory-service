@@ -1,14 +1,21 @@
 package com.shirtms.inventory.service;
 
+import java.util.List;
+
 import com.shirtms.inventory.dto.InventoryRequestDTO;
 import com.shirtms.inventory.entity.InventoryItem;
 
-import java.util.List;
-
 public interface InventoryService {
+
     InventoryItem stockIn(InventoryRequestDTO request);
+
     InventoryItem stockOut(InventoryRequestDTO request);
-    List<InventoryItem> getAllInventory();
+
     List<InventoryItem> getLowStockItems();
-    InventoryItem addInventoryItem(InventoryItem item);
+
+    List<InventoryItem> getAllItems();  // 👈 rename getAllInventory to getAllItems
+
+    List<InventoryItem> filterInventory(String itemName, String productType);
+
+    InventoryItem addInventoryItem(InventoryItem item);  // 👈 add this method
 }
